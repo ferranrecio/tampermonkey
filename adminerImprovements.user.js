@@ -185,4 +185,14 @@ $(document).ready(function(){
   $('a.vista-adminer').on('click', function(){
     vistaOn();
   })
+
+  // Helps for Moodle SQL
+  $("pre.sqlarea").bind('keyup', function() {
+      // Wait a few miliseconds to let all aminder editor work.
+      setTimeout(function(){
+          var curr = $('textarea.sqlarea').val();
+          curr = curr.replace(/\{([a-zA-Z0-9_]+)\}/mg, "mdl_\$1");
+          $('textarea.sqlarea').val(curr);
+      }, 300);
+  });
 });
