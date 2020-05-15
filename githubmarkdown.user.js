@@ -28,8 +28,10 @@ function add_markdown_code_links(url, line, elem) {
     var blobs = elem.siblings('.blob-code');
     if (blobs.length != 0) {
         blobs.each(function(index, value){
+            index++;
             var code = value.innerText.trim();
             if (code != "") {
+                add_markdown_button('Code'+index, code, url);
                 var links = parse_code_markdown(code);
                 for(var i=0; i<links.length; i++){
                     add_markdown_button(links[i], links[i], url);
@@ -47,7 +49,6 @@ function parse_code_markdown(code) {
     let regex = [
         /function (\w+)/g,
         /class (\w+)/g,
-        /(\$\w+) =/g,
         /(\@\w+)/g,
     ];
     for(var i=0; i<regex.length; i++) {
@@ -60,6 +61,10 @@ function parse_code_markdown(code) {
 }
 
 function add_markdown_line_links(url, line, elem) {
+    let markdown = url;
+    let button = get_markdownbutton('URL', markdown);
+    append_markdown_tool(button);
+
     add_markdown_button("here", "here", url);
     add_markdown_button("#"+line, "#"+line, url);
 }
@@ -96,6 +101,11 @@ function clean_markdown_tools() {
     tools.innerHTML = "";
 }
 
+function append_markdown_tool(elem) {
+    var tools = document.getElementById('markdowntools');
+    tools.appendChild(elem);
+}
+
 function create_markdown_tools() {
     // Generate general toolbox.
     var tools = document.createElement('div');
@@ -108,41 +118,57 @@ function create_markdown_tools() {
 
 function add_markdown_button(buttontext, linktext, url) {
     linktext = markdown_clean_string(linktext);
-    var markdown = " ["+linktext+"|"+url+"]";
-    var clips = get_clipboard_button();
+    // var markdown = " ["+linktext+"|"+url+"]";
+    let markdown = "<a href=\""+url+"\">"+linktext+"</a>";
 
+    let button = get_markdownbutton(buttontext, markdown);
+
+    append_markdown_tool(button);
+}
+
+function get_markdownbutton(buttontext, markdown) {
     var button = document.createElement('span');
     button.classList.add('text-gray');
     Object.assign(button.style,{
-        backgroundColor:"#fff", border:"1px solid #ccc",
-        padding:".2em .3em", cursos:"alias", margin:"2px"
+        backgroundColor:"whitesmoke", border:"1px solid gray",
+        padding:".2em .3em", cursos:"alias", margin:"2px",
+        transition:"all .2s ease-in"
     });
-    clips.setAttribute('value', markdown);
-    button.innerHTML = buttontext+" "+clips.outerHTML;
-
-    var tools = document.getElementById('markdowntools');
-    tools.appendChild(button);
+    button.addEventListener("click", function(e){
+        copy_to_clip_rich_format(markdown, e.target);
+    });
+    button.innerHTML = buttontext;
+    return button;
 }
+
+function copy_to_clip_rich_format(str, target) {
+    function listener(e) {
+        e.clipboardData.setData("text/html", str);
+        e.clipboardData.setData("text/plain", str);
+        e.preventDefault();
+        Object.assign(target.style,{
+            backgroundColor:"lightgreen"
+        });
+        setTimeout(function() {
+            Object.assign(target.style,{
+                backgroundColor:"whitesmoke"
+            });
+        }, 750);
+    }
+    Object.assign(target.style,{
+        backgroundColor:"lightsalmon"
+    });
+    document.addEventListener("copy", listener);
+    document.execCommand("copy");
+    document.removeEventListener("copy", listener);
+};
 
 function markdown_clean_string(linktext) {
-    const regex = /(\[|\])/gi;
-    return linktext.replace(regex, '\\$1');
-}
-
-function get_clipboard_button () {
-    // Find the first clipboard element if any.
-    var clipelem = document.querySelector(".file-info clipboard-copy");
-    if (clipelem) {
-        return clipelem.cloneNode(true);
-    }
-    var clips = document.createElement('clipboard-copy');
-    clips.innerHTML = '[&#10175;]';
-    clips.classList.add('link-hover-blue');
-    Object.assign(clips.style,{
-        cursor:"pointer"
-    });
-    clips.setAttribute('data-copy-feedback', "Copied!");
-    return clips
+    linktext = linktext.replace(/&/g, '&amp;');
+    linktext = linktext.replace(/>/g, '&gt;');
+    linktext = linktext.replace(/</g, '&lt;');
+    linktext = linktext.replace(/"/g, '&quot;');
+    return linktext;
 }
 
 function init_markdown() {
