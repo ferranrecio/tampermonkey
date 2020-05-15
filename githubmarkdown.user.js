@@ -26,7 +26,6 @@ function hashchanged(elem){
 function add_markdown_code_links(url, line, elem) {
     // Try to parse the line if possible.
     var blobs = elem.siblings('.blob-code');
-    console.log(blobs);
     if (blobs.length != 0) {
         blobs.each(function(index, value){
             var code = value.innerText.trim();
