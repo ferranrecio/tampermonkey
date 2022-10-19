@@ -119,7 +119,7 @@ function create_markdown_tools() {
 function add_markdown_button(buttontext, linktext, url) {
     linktext = markdown_clean_string(linktext);
     // var markdown = " ["+linktext+"|"+url+"]";
-    let markdown = " <a href=\""+url+"\">"+linktext+"</a>";
+    let markdown = "<a href=\""+url+"\">"+linktext+"</a>";
 
     let button = get_markdownbutton(buttontext, markdown);
 
