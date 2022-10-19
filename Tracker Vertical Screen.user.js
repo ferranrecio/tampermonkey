@@ -9,6 +9,12 @@
 // @grant        none
 // ==/UserScript==
 
+/**
+ * Generate a button to copy text ot clipboard.
+ * @param {String} clipText the text to clip
+ * @param {String} buttonText optional button text
+ * @return {HTMLElement}
+ */
 const getClipboardButton = function(clipText, buttonText) {
     let clipButton = document.createElement("button");
     clipButton.innerText = buttonText ?? "CP";
@@ -38,6 +44,67 @@ const getClipboardButton = function(clipText, buttonText) {
     return clipButton;
 };
 
+/**
+ * Add localhost links to the project shortcuts section.
+ */
+const addLocalhostLinks = function() {
+    const issueLink = document.querySelector(`.aui-nav-breadcrumbs .issue-link`);
+    const issueKey = issueLink?.dataset?.issueKey;
+    const target = document.querySelector(`.project-shortcuts-list`);
+    if (!issueKey || !target) {
+        return;
+    }
+    // Localhost.
+    let localhostItem = document.createElement("li")
+    localhostItem.classList.add('project-shortcut');
+    localhostItem.innerHTML = `<a href="http://localhost/m/${issueKey}">Localhost</a>`;
+    target.append(localhostItem);
+    // Integraiton (for CLR).
+    let integrationItem = document.createElement("li")
+    integrationItem.classList.add('project-shortcut');
+    integrationItem.innerHTML = `<a href="http://localhost/m/integration">Integration</a>`;
+    target.append(integrationItem);
+};
+
+/**
+ * Add copy buttons to the issue fields.
+ */
+const addFieldsClipboardButtons = function() {
+    // Add some clipboard buttons depending on the page.
+    const propertylist = document.querySelector(`#customfield-tabs .property-list`);
+    if (!propertylist) {
+        return;
+    }
+    const properties = propertylist.querySelectorAll(`li.item .value`);
+    properties.forEach(item => {
+        // Add clipboard button.
+        let clipButton = getClipboardButton(item.textContent);
+        clipButton.style.position = "absolute";
+        clipButton.style.left = "-2.5rem";
+        item.parentNode.prepend(clipButton);
+    });
+};
+
+/**
+ * Add CLR command copy button to page.
+ */
+const addCLRClipboardButtons = function() {
+    const gitInfo = {
+        repo: document.getElementById(`customfield_10100-val`)?.textContent,
+        branch: document.getElementById(`customfield_10111-val`)?.textContent
+    };
+    if (!gitInfo.repo || !gitInfo.branch) {
+        return;
+    }
+    // Generate gg clr command.
+    const jiraTools = document.getElementById('stalker');
+    const clipButton = getClipboardButton(`gg clr ${gitInfo.repo} ${gitInfo.branch}`, 'CLR command');
+    clipButton.style.position = "absolute";
+    clipButton.style.right = "2.5rem";
+    clipButton.style.bottom = "4rem";
+    jiraTools?.prepend(clipButton);
+};
+
 (function() {
     'use strict';
 
@@ -52,55 +119,7 @@ const getClipboardButton = function(clipText, buttonText) {
         lateralpanel.classList.toggle('minmenow');
     });
 
-    // Add localhost and integration links.
-    const issueLink = document.querySelector(`.aui-nav-breadcrumbs .issue-link`);
-    const issueKey = issueLink?.dataset?.issueKey;
-    const target = document.querySelector(`.project-shortcuts-list`);
-    if (issueKey && target) {
-        // Localhost.
-        let localhostItem = document.createElement("li")
-        localhostItem.classList.add('project-shortcut');
-        localhostItem.innerHTML = `<a href="http://localhost/m/${issueKey}">Localhost</a>`;
-        target.append(localhostItem);
-        // Integraiton (for CLR).
-        let integrationItem = document.createElement("li")
-        integrationItem.classList.add('project-shortcut');
-        integrationItem.innerHTML = `<a href="http://localhost/m/integration">Integration</a>`;
-        target.append(integrationItem);
-    }
-
-    // Some fields are important to us.
-    const repoFieldId = `customfield_10100-val`;
-    const branchFieldId = `customfield_10111-val`;
-    const gitInfo = {};
-
-    // Add some clipboard buttons depending on the page.
-    const propertylist = document.querySelector(`#customfield-tabs .property-list`);
-    if (propertylist) {
-        const properties = propertylist.querySelectorAll(`li.item .value`);
-        properties.forEach(item => {
-            // Add clipboard button.
-            let clipButton = getClipboardButton(item.textContent);
-            clipButton.style.position = "absolute";
-            clipButton.style.left = "-2.5rem";
-            item.parentNode.prepend(clipButton);
-            // Check f it is a git information field.
-            if (item.id === repoFieldId) {
-                gitInfo.repo = item.textContent;
-            }
-            if (item.id === branchFieldId) {
-                gitInfo.branch = item.textContent;
-            }
-        });
-    }
-
-    // Generate an extra repo and branch button if possible.
-    if (gitInfo.repo && gitInfo.branch) {
-        const jiraTools = document.getElementById('stalker');
-        const clipButton = getClipboardButton(`gg clr ${gitInfo.repo} ${gitInfo.branch}`, 'CLR command');
-        clipButton.style.position = "absolute";
-        clipButton.style.right = "2.5rem";
-        clipButton.style.bottom = "4rem";
-        jiraTools.prepend(clipButton);
-    }
+    addLocalhostLinks();
+    addFieldsClipboardButtons();
+    addCLRClipboardButtons();
 })();
